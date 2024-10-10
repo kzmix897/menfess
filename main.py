@@ -171,4 +171,4 @@ async def main():
 
 # Mulai bot dan jalankan health check
 akun_kedua.loop.run_until_complete(main())
-logger.info("Bot is running and health check initialized.")initialized.") 
+logger.info("Bot is running and health check initialized.")
