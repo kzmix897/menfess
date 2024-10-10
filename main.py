@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 # Ganti dengan informasi yang didapatkan dari Telegram Developer
 api_id = '29050819'
 api_hash = 'e801321d49ec12a06f52a91ee3ff284e'
-bot_token = '7490004213:AAGTJb0c1K3ezk4hNu_NwStYbBnwQL3UR0I'
+bot_token = '7546042741:AAGii1xQR_mA4AiReH0GykSpgKJx7he1D98'
 
 # Session untuk akun kedua yang akan mengirim pesan
 session_file = 'akun_kedua.session'
@@ -20,6 +20,20 @@ akun_kedua = TelegramClient(session_file, api_id, api_hash)
 
 # Dictionary untuk menyimpan pengirim anonim dan target
 message_mapping = {}
+
+# Fungsi untuk menjelaskan cara kerja bot
+@bot.on(events.NewMessage(pattern='/start'))
+async def start_handler(event):
+    await bot.send_message(
+        event.sender_id, 
+        "Selamat datang di bot Menfess anonim!\n\n"
+        "Cara kerja bot ini:\n"
+        "1. Gunakan perintah /menfess @username pesanmu untuk mengirim pesan anonim ke pengguna lain.\n"
+        "2. Pengguna akan menerima pesan dengan ID yang bisa digunakan untuk membalas.\n"
+        "3. Pengguna yang menerima pesan dapat membalas menggunakan perintah /reply <id pesan> <pesan>.\n"
+        "4. Semua pesan bersifat anonim, baik pengirim maupun penerima tidak mengetahui identitas satu sama lain."
+    )
+    logger.info(f"User {event.sender_id} memulai bot dengan perintah /start")
 
 # Fungsi untuk mengirim panduan ke user baru
 @bot.on(events.ChatAction)
