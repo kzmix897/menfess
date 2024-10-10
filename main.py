@@ -20,17 +20,17 @@ health_handler = logging.FileHandler('health_check.log')
 health_logger.addHandler(health_handler)
 
 # Ganti dengan informasi yang didapatkan dari Telegram Developer
-api_id = '29050819'
-api_hash = 'e801321d49ec12a06f52a91ee3ff284e'
-bot_token = '7109883302:AAE_pS7K-XE6h2SRqlgiSH4wrRi5Q2hjyC8'
+API_ID = '29050819'
+API_HASH = 'e801321d49ec12a06f52a91ee3ff284e'
+BOT_TOKEN = '7109883302:AAE_pS7K-XE6h2SRqlgiSH4wrRi5Q2hjyC8'
 
 # Session untuk akun kedua yang akan mengirim pesan
 session_file = 'akun_kedua.session'
 phone_number_akun_kedua = '+62 856 92226889'
 
 # Buat client untuk bot dan akun kedua
-bot = TelegramClient('bot', api_id, api_hash).start(bot_token=bot_token)
-akun_kedua = TelegramClient(session_file, api_id, api_hash)
+bot = TelegramClient('bot', API_ID, API_HASH).start(BOT_TOKEN=BOT_TOKEN)
+akun_kedua = TelegramClient(session_file, API_ID, API_HASH)
 
 # Dictionary untuk menyimpan pengirim anonim dan target
 message_mapping = {}
