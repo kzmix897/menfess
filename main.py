@@ -40,10 +40,10 @@ def generate_token(length=6):
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
 
 # Fungsi untuk menjelaskan cara kerja bot
-@bot.on(events.NewMessage(pattern='/start'))
+@client.on(events.NewMessage(pattern='/start'))
 async def start_handler(event):
     bot_logger.info(f"Perintah /start diterima dari {event.sender_id}")
-    await bot.send_message(
+    await client.send_message(
         event.sender_id, 
         "Selamat datang di bot Menfess anonim!\n\n"
         "Cara kerja bot ini:\n"
@@ -55,16 +55,16 @@ async def start_handler(event):
     logger.info(f"User {event.sender_id} memulai bot dengan perintah /start")
 
 # Fungsi untuk mengirim panduan ke user baru
-@bot.on(events.ChatAction)
+@client.on(events.ChatAction)
 async def handler(event):
     if event.user_added or event.user_joined:
         user = await event.get_user()
-        await bot.send_message(user.id, 
+        await client.send_message(user.id, 
                                "Selamat datang! Untuk mengirim pesan menfess, gunakan format:\n"
                                "/menfess @username pesanmu")
 
 # Fungsi untuk menangani perintah /menfess
-@bot.on(events.NewMessage(pattern='/menfess'))
+@client.on(events.NewMessage(pattern='/menfess'))
 async def menfess_handler(event):
     command_parts = event.message.text.split(maxsplit=2)
     if len(command_parts) < 3:
@@ -95,7 +95,7 @@ async def menfess_handler(event):
             }
 
             # Kirim instruksi ke pengguna A
-            await bot.send_message(
+            await client.send_message(
                 event.sender_id,  # Kirim instruksi ke Pengguna A
                 f"Pesan berhasil dikirim ke {target_username}.\n"
                 f"Kode rahasia: `{token}`\n"  # Menggunakan format monospace
@@ -109,7 +109,7 @@ async def menfess_handler(event):
             bot_logger.error(f"Gagal mengirim pesan: {str(e)}")
 
 # Fungsi untuk menangani perintah /reply dari Pengguna B
-@bot.on(events.NewMessage(pattern='/reply'))
+@client.on(events.NewMessage(pattern='/reply'))
 async def reply_handler(event):
     bot_logger.info("Memeriksa perintah reply...")
     command_parts = event.message.text.split(maxsplit=2)
@@ -126,7 +126,7 @@ async def reply_handler(event):
         target_username = message_mapping[token]['target_username']
 
         bot_logger.info(f"Mengirim balasan ke {pengirim_asli} dengan konten: {reply_content}")
-        await bot.send_message(
+        await client.send_message(
             pengirim_asli, 
             f"Balasan dari {target_username}:\n{reply_content}"
         )
@@ -163,7 +163,7 @@ async def main():
     await asyncio.gather(
         login_akun_kedua(),  # Login akun kedua
         tcp_health_check(),  # Mulai health check di port 8000
-        bot.run_until_disconnected()  # Jalankan bot
+        client.run_until_disconnected()  # Jalankan bot
     )
 
 # Mulai bot dan jalankan health check
