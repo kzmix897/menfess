@@ -29,7 +29,7 @@ session_file = 'akun_kedua.session'
 phone_number_akun_kedua = '+62 856 92226889'
 
 # Buat client untuk bot dan akun kedua
-bot = TelegramClient('bot', API_ID, API_HASH, bot_token=BOT_TOKEN)
+client = TelegramClient('bot', API_ID, API_HASH).start(bot_token=BOT_TOKEN)
 akun_kedua = TelegramClient(session_file, API_ID, API_HASH)
 
 # Dictionary untuk menyimpan pengirim anonim dan target
