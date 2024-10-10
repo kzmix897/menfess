@@ -152,10 +152,13 @@ async def tcp_health_check():
     server.listen(5)
     health_logger.info("Health check server berjalan di port 8000")
 
+    connected_once = False  # For checking first connection log only
+
     while True:
         client_socket, client_address = server.accept()
-        # Tambah log hanya untuk debugging jika dibutuhkan
-        health_logger.info(f"Terhubung dengan {client_address}")
+        if not connected_once:  # Only log once on the first connection
+            health_logger.info(f"Terhubung dengan {client_address}")
+            connected_once = True
         client_socket.close()
 
 # Jalankan health check secara asynchronous
@@ -168,3 +171,4 @@ async def main():
 
 # Mulai bot dan jalankan health check
 akun_kedua.loop.run_until_complete(main())
+logger.info("Bot is running and health check initialized.")initialized.") 
