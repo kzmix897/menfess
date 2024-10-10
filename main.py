@@ -1,13 +1,23 @@
-from telethon import TelegramClient, events
 import logging
 import random
 import string
-import asyncio
+from telethon import TelegramClient, events
 import socket
+import asyncio
 
 # Konfigurasi logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Logger untuk bot
+bot_logger = logging.getLogger('bot_logger')
+bot_logger.setLevel(logging.INFO)
+
+# Logger untuk health check, disimpan ke file terpisah
+health_logger = logging.getLogger('health_logger')
+health_logger.setLevel(logging.INFO)
+health_handler = logging.FileHandler('health_check.log')
+health_logger.addHandler(health_handler)
 
 # Ganti dengan informasi yang didapatkan dari Telegram Developer
 api_id = '29050819'
@@ -32,6 +42,7 @@ def generate_token(length=6):
 # Fungsi untuk menjelaskan cara kerja bot
 @bot.on(events.NewMessage(pattern='/start'))
 async def start_handler(event):
+    bot_logger.info(f"Perintah /start diterima dari {event.sender_id}")
     await bot.send_message(
         event.sender_id, 
         "Selamat datang di bot Menfess anonim!\n\n"
@@ -92,15 +103,15 @@ async def menfess_handler(event):
             )
 
             await event.reply(f"Pesan dikirim ke {target_username} dengan Kode rahasia: `{token}`.")  # Menggunakan format monospace
-            logger.info(f"Pesan ke {target_username} berhasil dikirim. Kode rahasia: {token}")
+            bot_logger.info(f"Pesan ke {target_username} berhasil dikirim. Kode rahasia: {token}")
         except Exception as e:
             await event.reply(f"Gagal mengirim pesan: {str(e)}")
-            logger.error(f"Gagal mengirim pesan: {str(e)}")
+            bot_logger.error(f"Gagal mengirim pesan: {str(e)}")
 
 # Fungsi untuk menangani perintah /reply dari Pengguna B
 @bot.on(events.NewMessage(pattern='/reply'))
 async def reply_handler(event):
-    logger.info("Memeriksa perintah reply...")
+    bot_logger.info("Memeriksa perintah reply...")
     command_parts = event.message.text.split(maxsplit=2)
     if len(command_parts) < 3:
         await event.reply("Format salah. Gunakan: /reply <kode rahasia> <balasanmu>")
@@ -114,17 +125,17 @@ async def reply_handler(event):
         pengirim_asli = message_mapping[token]['pengirim_asli']
         target_username = message_mapping[token]['target_username']
 
-        logger.info(f"Mengirim balasan ke {pengirim_asli} dengan konten: {reply_content}")
+        bot_logger.info(f"Mengirim balasan ke {pengirim_asli} dengan konten: {reply_content}")
         await bot.send_message(
             pengirim_asli, 
             f"Balasan dari {target_username}:\n{reply_content}"
         )
 
         await event.reply("Balasan dikirim ke pengirim asli.")
-        logger.info(f"Balasan dikirim ke {pengirim_asli}. Konten: {reply_content}")
+        bot_logger.info(f"Balasan dikirim ke {pengirim_asli}. Konten: {reply_content}")
     else:
         await event.reply("Kode rahasia tidak valid atau tidak ditemukan.")
-        logger.warning("Kode rahasia tidak ditemukan untuk dibalas.")
+        bot_logger.warning("Kode rahasia tidak ditemukan untuk dibalas.")
 
 # Fungsi untuk login akun kedua jika belum login
 async def login_akun_kedua():
@@ -134,24 +145,27 @@ async def login_akun_kedua():
             code = input("Masukkan kode otentikasi yang dikirimkan ke akun kedua: ")
             await akun_kedua.sign_in(phone_number_akun_kedua, code)
 
-# Fungsi untuk memulai TCP health check di port 8000
+# Fungsi Health Check TCP di port 8000
 async def tcp_health_check():
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_socket.bind(('0.0.0.0', 8000))  # Dengarkan di semua interface pada port 8000
-    server_socket.listen(5)  # Maksimum 5 koneksi dalam antrian
-    logger.info("Health check server berjalan di port 8000")
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind(("0.0.0.0", 8000))
+    server.listen(5)
+    health_logger.info("Health check server berjalan di port 8000")
 
     while True:
-        client_socket, address = server_socket.accept()
-        logger.info(f"Terhubung dengan {address}")
-        client_socket.send(b"Bot menfess sedang berjalan.\n")
+        client_socket, client_address = server.accept()
+        # Tambah log hanya untuk debugging jika dibutuhkan
+        health_logger.info(f"Terhubung dengan {client_address}")
         client_socket.close()
 
-# Jalankan login akun kedua dan bot
-akun_kedua.start()
-akun_kedua.loop.run_until_complete(login_akun_kedua())
+# Jalankan health check secara asynchronous
+async def main():
+    await asyncio.gather(
+        login_akun_kedua(),  # Login akun kedua
+        tcp_health_check()   # Mulai health check di port 8000
+    )
 
-# Jalankan TCP health check secara paralel dengan bot
-loop = asyncio.get_event_loop()
-loop.create_task(tcp_health_check())
-loop.run_until_complete(bot.run_until_disconnected())
+# Mulai bot dan jalankan health check
+akun_kedua.start()
+akun_kedua.loop.run_until_complete(main())
+bot.run_until_disconnected()
