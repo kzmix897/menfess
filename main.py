@@ -2,6 +2,7 @@ from telethon import TelegramClient, events
 import logging
 import random
 import string
+from flask import Flask
 
 # Konfigurasi logging
 logging.basicConfig(level=logging.INFO)
@@ -26,6 +27,13 @@ message_mapping = {}
 # Fungsi untuk menghasilkan kode rahasia unik
 def generate_token(length=6):
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
+
+# Buat aplikasi Flask
+app = Flask(__name__)
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    return 'OK', 200
 
 # Fungsi untuk menjelaskan cara kerja bot
 @bot.on(events.NewMessage(pattern='/start'))
@@ -133,6 +141,10 @@ async def login_akun_kedua():
             await akun_kedua.sign_in(phone_number_akun_kedua, code)
 
 # Jalankan login akun kedua dan bot
-akun_kedua.start()
-akun_kedua.loop.run_until_complete(login_akun_kedua())
-bot.run_until_disconnected()
+if __name__ == '__main__':
+    akun_kedua.start()
+    akun_kedua.loop.run_until_complete(login_akun_kedua())
+
+    # Jalankan Flask di background
+    app.run(host='0.0.0.0', port=8000)  # Pastikan aplikasi berjalan di port 8000
+    bot.run_until_disconnected()
