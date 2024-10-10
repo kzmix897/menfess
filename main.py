@@ -2,6 +2,8 @@ from telethon import TelegramClient, events
 import logging
 import random
 import string
+import asyncio
+import socket
 
 # Konfigurasi logging
 logging.basicConfig(level=logging.INFO)
@@ -132,7 +134,24 @@ async def login_akun_kedua():
             code = input("Masukkan kode otentikasi yang dikirimkan ke akun kedua: ")
             await akun_kedua.sign_in(phone_number_akun_kedua, code)
 
+# Fungsi untuk memulai TCP health check di port 8000
+async def tcp_health_check():
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.bind(('0.0.0.0', 8000))  # Dengarkan di semua interface pada port 8000
+    server_socket.listen(5)  # Maksimum 5 koneksi dalam antrian
+    logger.info("Health check server berjalan di port 8000")
+
+    while True:
+        client_socket, address = server_socket.accept()
+        logger.info(f"Terhubung dengan {address}")
+        client_socket.send(b"Bot menfess sedang berjalan.\n")
+        client_socket.close()
+
 # Jalankan login akun kedua dan bot
 akun_kedua.start()
 akun_kedua.loop.run_until_complete(login_akun_kedua())
-bot.run_until_disconnected()
+
+# Jalankan TCP health check secara paralel dengan bot
+loop = asyncio.get_event_loop()
+loop.create_task(tcp_health_check())
+loop.run_until_complete(bot.run_until_disconnected())
